@@ -1,8 +1,10 @@
 > [!CAUTION]
 >
 > ### Реакция антивирусов
+>
 > Windows Defender часто ошибочно помечает приложение как **Wacatac**.  
 > Если вы не можете скачать из-за блокировки, то:
+>
 > 1) Попробуйте скачать версию win7 (она ничем не отличается в плане функционала)
 > 2) Отключите антивирус на время скачивания, добавьте файл в исключения и включите обратно  
 >
@@ -29,11 +31,13 @@ Telegram Desktop → SOCKS5 (127.0.0.1:1080) → TG WS Proxy → WSS → Telegra
 ## 🚀 Быстрый старт
 
 ### Windows
+
 Перейдите на [страницу релизов](https://github.com/Flowseal/tg-ws-proxy/releases) и скачайте **`TgWsProxy.exe`**. Он собирается автоматически через [Github Actions](https://github.com/Flowseal/tg-ws-proxy/actions) из открытого исходного кода.
 
 При первом запуске откроется окно с инструкцией по подключению Telegram Desktop. Приложение сворачивается в системный трей.
 
 **Меню трея:**
+
 - **Открыть в Telegram** — автоматически настроить прокси через `tg://socks` ссылку
 - **Перезапустить прокси** — перезапуск без выхода из приложения
 - **Настройки...** — GUI-редактор конфигурации
@@ -41,11 +45,23 @@ Telegram Desktop → SOCKS5 (127.0.0.1:1080) → TG WS Proxy → WSS → Telegra
 - **Выход** — остановить прокси и закрыть приложение
 
 ### macOS
+
 Перейдите на [страницу релизов](https://github.com/Flowseal/tg-ws-proxy/releases) и скачайте **`TgWsProxy.dmg`** — универсальная сборка для Apple Silicon и Intel.
 
 1. Открыть образ
 2. Перенести **TG WS Proxy.app** в папку **Applications**
 3. При первом запуске macOS может попросить подтвердить открытие: **Системные настройки → Конфиденциальность и безопасность → Всё равно открыть**
+
+### Linux
+
+Перейдите на [страницу релизов](https://github.com/Flowseal/tg-ws-proxy/releases) и скачайте **`TgWsProxy`** (бинарный файл для x86_64).
+
+```bash
+chmod +x TgWsProxy
+./TgWsProxy
+```
+
+При первом запуске откроется окно с инструкцией. Приложение работает в системном трее (требуется AppIndicator).
 
 ## Установка из исходников
 
@@ -77,6 +93,13 @@ tg-ws-proxy-tray-win
 ```bash
 pip install -e ".[macos]"
 tg-ws-proxy-tray-macos
+```
+
+### Linux
+
+```bash
+pip install -e ".[linux]"
+tg-ws-proxy-tray-linux
 ```
 
 ### Консольный режим из исходников
@@ -118,6 +141,7 @@ CLI команды объявляются в `pyproject.toml` в секции `[
 tg-ws-proxy = "proxy.tg_ws_proxy:main"
 tg-ws-proxy-tray-win = "windows:main"
 tg-ws-proxy-tray-macos = "macos:main"
+tg-ws-proxy-tray-linux = "linux:main"
 ```
 
 ## Настройка Telegram Desktop
@@ -137,7 +161,11 @@ tg-ws-proxy-tray-macos = "macos:main"
 
 ## Конфигурация
 
-Tray-приложение хранит данные в `%APPDATA%/TgWsProxy`:
+Tray-приложение хранит данные в:
+
+- **Windows:** `%APPDATA%/TgWsProxy`
+- **macOS:** `~/Library/Application Support/TgWsProxy`
+- **Linux:** `~/.config/TgWsProxy` (или `$XDG_CONFIG_HOME/TgWsProxy`)
 
 ```json
 {
@@ -152,13 +180,15 @@ Tray-приложение хранит данные в `%APPDATA%/TgWsProxy`:
 
 ## Автоматическая сборка
 
-Проект содержит спецификации PyInstaller ([`packaging/windows.spec`](packaging/windows.spec), [`packaging/macos.spec`](packaging/macos.spec)) и GitHub Actions workflow ([`.github/workflows/build.yml`](.github/workflows/build.yml)) для автоматической сборки.
+Проект содержит спецификации PyInstaller ([`packaging/windows.spec`](packaging/windows.spec), [`packaging/macos.spec`](packaging/macos.spec), [`packaging/linux.spec`](packaging/linux.spec)) и GitHub Actions workflow ([`.github/workflows/build.yml`](.github/workflows/build.yml)) для автоматической сборки.
 
 Минимально поддерживаемые версии ОС для текущих бинарных сборок:
+
 - Windows 10+ для `TgWsProxy.exe`
 - Windows 7 для `TgWsProxy-win7.exe`
 - Intel macOS 10.15+
 - Apple Silicon macOS 11.0+
+- Linux x86_64 (требуется AppIndicator для системного трея)
 
 ## Лицензия
 

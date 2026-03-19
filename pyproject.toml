@@ -26,11 +26,13 @@ classifiers = [
   "Environment :: Console",
   "Environment :: MacOS X :: Cocoa",
   "Environment :: Win32 (MS Windows)",
+  "Environment :: X11 Applications :: GTK",
   "Intended Audience :: Customer Service",
   "Programming Language :: Python :: 3",
   "License :: OSI Approved :: MIT License",
   "Operating System :: MacOS :: MacOS X",
   "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX :: Linux",
   "Topic :: System :: Networking :: Firewalls",
 ]
 
@@ -63,10 +65,19 @@ macos = [
     "rumps==0.4.0",
 ]
 
+linux = [
+    "customtkinter==5.2.2",
+    "Pillow==12.1.1",
+    "psutil==7.0.0",
+    "pystray==0.19.5",
+    "pyperclip==1.9.0",
+]
+
 [project.scripts]
 tg-ws-proxy = "proxy.tg_ws_proxy:main"
 tg-ws-proxy-tray-win = "windows:main"
 tg-ws-proxy-tray-macos = "macos:main"
+tg-ws-proxy-tray-linux = "linux:main"
 
 [project.urls]
 Source = "https://github.com/Flowseal/tg-ws-proxy"
@@ -78,6 +89,7 @@ packages = ["proxy"]
 [tool.hatch.build.force-include]
 "windows.py" = "windows.py"
 "macos.py" = "macos.py"
+"linux.py" = "linux.py"
 
 [tool.hatch.version]
 path = "proxy/__init__.py"
