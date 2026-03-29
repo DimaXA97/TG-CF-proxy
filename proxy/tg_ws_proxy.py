@@ -1043,7 +1043,7 @@ async def _run(stop_event: Optional[asyncio.Event] = None):
     log.info("=" * 60)
     log.info("  Telegram MTProto WS Bridge Proxy")
     log.info("  Listening on   %s:%d", proxy_config.host, proxy_config.port)
-    log.info("  Secret:        %s", "dd" + proxy_config.secret)
+    log.info("  Secret:        %s", proxy_config.secret)
     log.info("  Target DC IPs:")
     for dc in sorted(proxy_config.dc_redirects.keys()):
         ip = proxy_config.dc_redirects.get(dc)

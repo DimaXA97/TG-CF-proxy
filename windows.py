@@ -214,9 +214,10 @@ def _edit_config_dialog() -> None:
             done.set()
 
         def on_save() -> None:
+            from tkinter import messagebox
             merged = validate_config_form(widgets, DEFAULT_CONFIG, include_autostart=_supports_autostart())
             if isinstance(merged, str):
-                _show_error(merged)
+                messagebox.showerror("TG WS Proxy — Ошибка", merged, parent=root)
                 return
             save_config(merged)
             _config.update(merged)
@@ -225,7 +226,6 @@ def _edit_config_dialog() -> None:
                 set_autostart_enabled(bool(merged.get("autostart", False)))
             _tray_icon.menu = _build_menu()
 
-            from tkinter import messagebox
             do_restart = messagebox.askyesno(
                 "Перезапустить?",
                 "Настройки сохранены.\n\nПерезапустить прокси сейчас?",

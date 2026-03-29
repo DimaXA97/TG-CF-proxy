@@ -372,10 +372,18 @@ def validate_config_form(
     except ValueError as e:
         return str(e)
 
+    secret_val = widgets.secret_var.get().strip()
+    if len(secret_val) != 32:
+        return "Secret должен содержать ровно 32 hex-символа (16 байт)."
+    try:
+        bytes.fromhex(secret_val)
+    except ValueError:
+        return "Secret должен состоять только из hex-символов (0-9, a-f)."
+
     new_cfg: Dict[str, Any] = {
         "host": host_val,
         "port": port_val,
-        "secret": widgets.secret_var.get().strip(),
+        "secret": secret_val,
         "dc_ip": lines,
         "verbose": widgets.verbose_var.get(),
     }
