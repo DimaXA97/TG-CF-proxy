@@ -41,6 +41,25 @@ jobs:
       - name: Build EXE with PyInstaller
         run: pyinstaller packaging/windows.spec --noconfirm
 
+      - name: Strip Rich PE header to avoid false AV detections
+        run: |
+          python -c "
+          import struct, pathlib
+          exe = pathlib.Path('dist/TgWsProxy.exe')
+          data = bytearray(exe.read_bytes())
+          rich = data.find(b'Rich')
+          if rich == -1:
+              raise SystemExit('Rich header not found')
+          ck = struct.unpack_from('<I', data, rich + 4)[0]
+          dans = struct.pack('<I', 0x536E6144 ^ ck)
+          ds = data.find(dans)
+          if ds == -1:
+              raise SystemExit('DanS marker not found')
+          data[ds:rich + 8] = b'\x00' * (rich + 8 - ds)
+          exe.write_bytes(data)
+          print(f'Stripped Rich header: offset {ds}..{rich+8}')
+          "
+
       - name: Rename artifact
         run: mv dist/TgWsProxy.exe dist/TgWsProxy_windows.exe
 
@@ -73,6 +92,25 @@ jobs:
 
       - name: Build EXE with PyInstaller
         run: pyinstaller packaging/windows.spec --noconfirm
+
+      - name: Strip Rich PE header to avoid false AV detections
+        run: |
+          python -c "
+          import struct, pathlib
+          exe = pathlib.Path('dist/TgWsProxy.exe')
+          data = bytearray(exe.read_bytes())
+          rich = data.find(b'Rich')
+          if rich == -1:
+              raise SystemExit('Rich header not found')
+          ck = struct.unpack_from('<I', data, rich + 4)[0]
+          dans = struct.pack('<I', 0x536E6144 ^ ck)
+          ds = data.find(dans)
+          if ds == -1:
+              raise SystemExit('DanS marker not found')
+          data[ds:rich + 8] = b'\x00' * (rich + 8 - ds)
+          exe.write_bytes(data)
+          print(f'Stripped Rich header: offset {ds}..{rich+8}')
+          "
 
       - name: Rename artifact
         run: mv dist/TgWsProxy.exe dist/TgWsProxy_windows_7_${{ matrix.suffix }}.exe
