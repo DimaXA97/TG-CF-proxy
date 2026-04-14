@@ -23,7 +23,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH=/opt/venv/bin:$PATH \
     TG_WS_PROXY_HOST=0.0.0.0 \
-    TG_WS_PROXY_PORT=1080 \
+    TG_WS_PROXY_PORT=1080
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends tini ca-certificates \
