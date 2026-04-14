@@ -5,7 +5,6 @@
 
 **Локальный SOCKS5-прокси** для Telegram Desktop, который **ускоряет работу Telegram**, перенаправляя трафик через Cloudflare. Данные передаются в том же зашифрованном виде, а для работы не нужны сторонние сервера.
 
-<img width="529" height="487" alt="image" src="https://github.com/user-attachments/assets/6a4cf683-0df8-43af-86c1-0e8f08682b62" />
 
 ## Как это работает
 
