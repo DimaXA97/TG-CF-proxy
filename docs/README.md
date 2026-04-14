@@ -1,6 +1,6 @@
 # TG CF Proxy
 
-Данный форк представляет собой лучшее от старых версий TG-WS и новых - entrypont SOCKS5 и redirect на сервера Cloudflare.
+Данный форк представляет собой лучшее от старых версий TG-WS и новых - entrypoint SOCKS5 и redirect на сервера Cloudflare.
 Подразумевается использование в качестве Docker-контейнера на backend.
 
 **Локальный SOCKS5-прокси** для Telegram Desktop, который **ускоряет работу Telegram**, перенаправляя трафик через Cloudflare. Данные передаются в том же зашифрованном виде, а для работы не нужны сторонние сервера.
@@ -23,7 +23,7 @@ Telegram Desktop → SOCKS5 Proxy (127.0.0.1:1080) → Cloudflare → Telegram D
 1. Git clone.
 2. cd ./TG-WS-proxy
 3. docker build -t tg-cf-proxy:1.0 .
-4. Отредактируйте Docker compose файл, указав свой домен ( --cf-domain virkgj.com)
+4. Отредактируйте Docker compose файл, указав свой домен или использовать по умолчанию ( --cf-domain virkgj.com)
 5. Создайте в папке wg0.conf, который является частью Outbound основного контейнера для выхода в интернет. 
    Если у вас другой сценарий использования - часть с TG-CF-proxy-wg можно удалить из Docker compose.
 6. docker compose up -d
