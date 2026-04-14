@@ -1,0 +1,28 @@
+services:
+  TG-CF-proxy-wg:
+    image: jordanpotter/wireguard
+    container_name: TG-CF-proxy-wg
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    sysctls:
+      net.ipv4.conf.all.src_valid_mark: 1
+    volumes:
+      - ./wg0.conf:/etc/wireguard/wg0.conf
+    restart: unless-stopped
+
+  TG-CF-proxy:
+    image: TG-CF-proxy:1.0
+    container_name: TG-CF-proxy
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    command: --host 0.0.0.0 --port 1080 --cf-domain virkgj.com
+    init: true
+    restart: always
+    environment:
+      - TZ=Europe/Moscow
+      - BIND_ADDR=0.0.0.0
+      - BIND_PORT=1080
+      - TINI_SUBREAPER=1
+    network_mode: service:TG-CF-proxy-wg
