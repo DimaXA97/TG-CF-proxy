@@ -15,7 +15,7 @@ Telegram Desktop → SOCKS5 Proxy (127.0.0.1:1080) → Cloudflare → Telegram D
 1. Приложение поднимает SOCKS5 прокси на `127.0.0.1:1080`
 2. Перехватывает подключения к IP-адресам Telegram
 3. Извлекает DC ID из MTProto obfuscation init-пакета
-4. Устанавливает WebSocket (TLS) соединение через Cloudflare к соответствующему DC через домены Telegram
+4. Устанавливает WebSocket (TLS) соединение через Cloudflare к соответствующему DC
 5. Если CF недоступен или IP-адрес не является адресом Telegram, то bypass на прямое TCP-соединение
 
 ## 🚀 Быстрый старт
