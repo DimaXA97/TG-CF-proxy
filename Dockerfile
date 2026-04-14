@@ -23,8 +23,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PATH=/opt/venv/bin:$PATH \
     TG_WS_PROXY_HOST=0.0.0.0 \
-    TG_WS_PROXY_PORT=1443 \
-    TG_WS_PROXY_DC_IPS="2:149.154.167.220 4:149.154.167.220"
+    TG_WS_PROXY_PORT=1080 \
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends tini ca-certificates \
@@ -39,7 +38,7 @@ COPY docs/README.md LICENSE ./
 
 USER app
 
-EXPOSE 1443/tcp
+EXPOSE 1080/tcp
 
-ENTRYPOINT ["/usr/bin/tini", "--", "/bin/sh", "-lc", "set -eu; args=\"--host ${TG_WS_PROXY_HOST} --port ${TG_WS_PROXY_PORT}\"; for dc in ${TG_WS_PROXY_DC_IPS}; do args=\"$args --dc-ip $dc\"; done; exec /opt/venv/bin/python -u proxy/tg_ws_proxy.py $args \"$@\"", "--"]
+ENTRYPOINT ["/usr/bin/tini", "--", "/bin/sh", "-lc", "set -eu; args=\"--host ${TG_WS_PROXY_HOST} --port ${TG_WS_PROXY_PORT}\"; exec /opt/venv/bin/python -u proxy/tg_ws_proxy.py $args \"$@\"", "--"]
 CMD []
