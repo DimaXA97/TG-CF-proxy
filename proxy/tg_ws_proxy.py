@@ -31,14 +31,12 @@ _RECV_BUF = 256 * 1024
 _SEND_BUF = 256 * 1024
 
 _TELEGRAM_IP_RANGES = [
-    (struct.unpack('!I', _socket.inet_aton('185.76.151.0'))[0],
-     struct.unpack('!I', _socket.inet_aton('185.76.151.255'))[0]),
-    (struct.unpack('!I', _socket.inet_aton('149.154.160.0'))[0],
-     struct.unpack('!I', _socket.inet_aton('149.154.175.255'))[0]),
-    (struct.unpack('!I', _socket.inet_aton('91.105.192.0'))[0],
-     struct.unpack('!I', _socket.inet_aton('91.105.193.255'))[0]),
-    (struct.unpack('!I', _socket.inet_aton('91.108.0.0'))[0],
-     struct.unpack('!I', _socket.inet_aton('91.108.255.255'))[0]),
+
+    (struct.unpack('!I', _socket.inet_aton('185.76.151.0'))[0], struct.unpack('!I', _socket.inet_aton('185.76.151.255'))[0]),
+    (struct.unpack('!I', _socket.inet_aton('149.154.160.0'))[0], struct.unpack('!I', _socket.inet_aton('149.154.175.255'))[0]),
+    (struct.unpack('!I', _socket.inet_aton('91.105.192.0'))[0], struct.unpack('!I', _socket.inet_aton('91.105.193.255'))[0]),
+    (struct.unpack('!I', _socket.inet_aton('91.108.0.0'))[0], struct.unpack('!I', _socket.inet_aton('91.108.255.255'))[0]),
+    (struct.unpack('!I', _socket.inet_aton('95.161.64.0'))[0], struct.unpack('!I', _socket.inet_aton('95.161.79.255'))[0]),
 ]
 
 _PROTO_ABRIDGED = 0xEFEFEFEF
