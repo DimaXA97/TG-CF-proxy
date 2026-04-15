@@ -51,7 +51,8 @@ CIDR Telegram calls
 За конфигурацию "по умолчанию" будем принимать, что клиент перенаправляет в прокси (L7) или VPN (L3) весь свой трафик.
 1. На сервере L3 (Для примера указан OpenVPN) нужно настроить роутинг, что бы все подсети TG были перенаправлены в Sing-Box.
 2. На сервере L7 можно сразу разделить CIDR - Telegram calls идут в outbound зарубежного VPS, а Telegram media - [Outbound SOCKS5 -> Inbound SOCKS5 TG-CF]
-3. Точка выхода в сеть TG-WS-proxy должна роутится в отдельную таблицу маршрутизации, где [0.0.0.0/0 -> VPS, CIDR Cloudflare -> Zapret] 
+3. Точка выхода в сеть TG-WS-proxy должна роутиться в отдельную таблицу маршрутизации, где [0.0.0.0/0 -> VPS, CIDR Cloudflare -> Zapret] 
+
    CDN Cloudflare - https://www.cloudflare.com/ips-v4/#
    
 <img width="1050" height="287" alt="image" src="https://raw.githubusercontent.com/DimaXA97/TG-CF-proxy/refs/heads/main/docs/backend.png" />
