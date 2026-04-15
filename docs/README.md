@@ -54,7 +54,7 @@ CIDR Telegram calls
 3. Точка выхода в сеть TG-WS-proxy должна роутится в отдельную таблицу маршрутизации, где [0.0.0.0/0 -> VPS, CIDR Cloudflare -> Zapret] 
    CDN Cloudflare - https://www.cloudflare.com/ips-v4/#
    
-<img width="1050" height="297" alt="image" src="https://raw.githubusercontent.com/DimaXA97/TG-CF-proxy/refs/heads/main/docs/backend.png" />
+<img width="1050" height="287" alt="image" src="https://raw.githubusercontent.com/DimaXA97/TG-CF-proxy/refs/heads/main/docs/backend.png" />
 ## Лицензия
 
 [MIT License](LICENSE)
