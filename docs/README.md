@@ -31,7 +31,30 @@ Telegram Desktop → SOCKS5 Proxy (127.0.0.1:1080) → Cloudflare → Telegram D
    Если у вас другой сценарий использования - часть с TG-CF-proxy-wg можно удалить из Docker compose.
 6. docker compose up -d
 
+## Принципиальная схема интеграции в backend
+CIDR Telegram media
+91.105.192.0/23
+91.108.56.0/22
+95.161.64.0/20
+149.154.160.0/20
+149.154.164.0/22
+149.154.172.0/22
+185.76.151.0/24
 
+CIDR Telegram calls
+91.108.4.0/22
+91.108.8.0/22
+91.108.12.0/22
+91.108.16.0/22
+91.108.20.0/22
+ 
+За конфигурацию "по умолчанию" будем принимать, что клиент перенаправляет в прокси (L7) или VPN (L3) весь свой трафик.
+1. На сервере L3 (Для примера указан OpenVPN) нужно настроить роутинг, что бы все подсети TG были перенаправлены в Sing-Box.
+2. На сервере L7 можно сразу разделить CIDR - Telegram calls идут в outbound зарубежного VPS, а Telegram media - [Outbound SOCKS5 -> Inbound SOCKS5 TG-CF]
+3. Точка выхода в сеть TG-WS-proxy должна роутится в отдельную таблицу маршрутизации, где [0.0.0.0/0 -> VPS, CIDR Cloudflare -> Zapret] 
+   CDN Cloudflare - https://www.cloudflare.com/ips-v4/#
+   
+<img width="1050" height="297" alt="image" src="https://raw.githubusercontent.com/DimaXA97/TG-CF-proxy/refs/heads/main/docs/backend.png" />
 ## Лицензия
 
 [MIT License](LICENSE)
