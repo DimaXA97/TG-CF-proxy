@@ -29,8 +29,8 @@ Telegram Desktop → SOCKS5 Proxy (127.0.0.1:1080) → Cloudflare → Telegram D
    Отредактируйте нужный Docker compose файл, указав свой домен или используйте установленный по умолчанию ( --cf-domain virkgj.com)
    Как настроить свой домен - https://github.com/DimaXA97/TG-CF-proxy/blob/main/docs/CfProxy.md
 5. Создайте в папке wg0.conf, который является частью Outbound основного контейнера для выхода в интернет, если используете docker-compose-wg.
-6. Использовать WG: docker compose -f docker-compose-wg up -d
-7. Использовать Docker-bridge: docker compose -f docker-compose-proxy up -d
+6. Использовать WG: docker compose -f docker-compose-wg.yml up -d
+7. Использовать Docker-bridge: docker compose -f docker-compose-proxy.yml up -d
 
 ## Принципиальная схема интеграции в backend
 CIDR Telegram media
