@@ -1,7 +1,7 @@
 services:
   TG-CF-proxy-wg:
     image: jordanpotter/wireguard
-    container_name: TG-CF-proxy-wg
+    container_name: tg-cf-proxy-wg
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
@@ -12,8 +12,8 @@ services:
     restart: unless-stopped
 
   TG-CF-proxy:
-    image: TG-CF-proxy:1.0
-    container_name: TG-CF-proxy
+    image: tg-cf-proxy:1.2.1
+    container_name: tg-cf-proxy
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
@@ -25,4 +25,4 @@ services:
       - BIND_ADDR=0.0.0.0
       - BIND_PORT=1080
       - TINI_SUBREAPER=1
-    network_mode: service:TG-CF-proxy-wg
+    network_mode: service:tg-cf-proxy-wg
