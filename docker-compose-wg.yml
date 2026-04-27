@@ -12,7 +12,7 @@ services:
     restart: unless-stopped
 
   TG-CF-proxy:
-    image: tg-cf-proxy:1.2.1
+    image: tg-cf-proxy:3
     container_name: tg-cf-proxy
     cap_add:
       - NET_ADMIN
