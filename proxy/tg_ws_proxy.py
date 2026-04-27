@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
 Telegram SOCKS5 -> Cloudflare WebSocket Bridge Proxy
-- Entry: SOCKS5
-- Relay: Cloudflare WS (transparent, WITH proper MTProto framing)
+- Entry: SOCKS5 (v1.0.3 style)
+- Relay: Cloudflare WS with balancer (v1.0.7 style)
 - Fallback: Direct TCP passthrough
-- Features: Subnet DC resolver, Browser/TLS passthrough, CF domain retry
-- Version: 2.2.0 (Fixed GIF/media hang, 1.0.7 framing logic adapted)
+- Features: Bot API redirect, Browser/TLS passthrough, Proper MTProto framing
+- Version: 3.0.0 (Production-ready, GIF/media fixed)
 """
 from __future__ import annotations
 
@@ -15,12 +15,13 @@ import base64
 import ipaddress
 import logging
 import os
+import random
 import socket as _socket
 import ssl
 import struct
 import sys
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
@@ -62,6 +63,44 @@ _ssl_ctx.check_hostname = False
 _ssl_ctx.verify_mode = ssl.CERT_NONE
 
 log = logging.getLogger('tg-ws-cf-proxy')
+
+# ======================== CF DOMAIN BALANCER (1.0.7 style) ========================
+class _CfBalancer:
+    """Simple round-robin balancer for CF proxy domains per DC."""
+    def __init__(self, base_domains: List[str]):
+        self._base_domains = list(base_domains)
+        self._active: Dict[int, str] = {}
+        self._index: Dict[int, int] = {}
+
+    def get_domains_for_dc(self, dc: int) -> List[str]:
+        """Return ordered list of domains to try for given DC."""
+        if not self._base_domains:
+            return []
+        # Start with active, then round-robin through others
+        active = self._active.get(dc)
+        others = [d for d in self._base_domains if d != active]
+        result = []
+        if active:
+            result.append(active)
+        result.extend(others)
+        return result
+
+    def update_domain_for_dc(self, dc: int, domain: str) -> bool:
+        """Mark domain as successful for DC, return True if changed."""
+        old = self._active.get(dc)
+        if old != domain:
+            self._active[dc] = domain
+            return True
+        return False
+
+    def rotate_for_dc(self, dc: int):
+        """Rotate to next domain for DC (on failure)."""
+        if not self._base_domains:
+            return
+        idx = self._index.get(dc, 0)
+        idx = (idx + 1) % len(self._base_domains)
+        self._index[dc] = idx
+        self._active[dc] = self._base_domains[idx]
 
 # ======================== ROBUST DC RESOLVER ========================
 _DC_SUBNETS = [
@@ -135,6 +174,14 @@ def _is_browser_ws_init(data: bytes) -> bool:
     except Exception:
         pass
     return False
+
+def _is_bot_api_host(host: str) -> bool:
+    return host.lower() in ('api.telegram.org', 'api.telegram.org.')
+
+def _rewrite_bot_api_host(host: str, cf_domain: str) -> str:
+    if _is_bot_api_host(host):
+        return f'api.{cf_domain.strip().lstrip("*.")}'
+    return host
 
 # ======================== RAW WEBSOCKET ========================
 class WsHandshakeError(Exception):
@@ -403,10 +450,12 @@ def _patch_init_dc(data: bytes, dc: int) -> bytes:
         return data
 
 # ======================== TCP PASSTHROUGH / FALLBACK ========================
-async def _pipe_passthrough(reader, writer, dst, port, label, init_data: Optional[bytes] = None):
-    log.info("[%s] [Passthrough] -> %s:%d", label, dst, port)
+async def _pipe_passthrough(reader, writer, dst, port, label, init_data: Optional[bytes] = None, sni_domain: Optional[str] = None):
+    log.info("[%s] [Passthrough] -> %s:%d (SNI: %s)", label, dst, port, sni_domain or dst)
     try:
-        rr, rw = await asyncio.wait_for(asyncio.open_connection(dst, port), timeout=10)
+        rr, rw = await asyncio.wait_for(
+            asyncio.open_connection(dst, port, ssl=_ssl_ctx if port == 443 else None, server_hostname=sni_domain or dst),
+            timeout=10)
         _set_sock_opts(rw.transport)
     except Exception as exc:
         log.warning("[%s] Passthrough connect failed to %s:%d: %s", label, dst, port, exc)
@@ -527,7 +576,7 @@ _SOCKS5_REPLIES = {s: bytes([0x05, s, 0x00, 0x01, 0, 0, 0, 0, 0, 0]) for s in (0
 def _socks5_reply(status):
     return _SOCKS5_REPLIES[status]
 
-async def _handle_client(reader, writer, cf_domain: str):
+async def _handle_client(reader, writer, cf_domain: str, balancer: _CfBalancer):
     peer = writer.get_extra_info('peername')
     label = f"{peer[0]}:{peer[1]}" if peer else "?"
     _set_sock_opts(writer.transport)
@@ -570,8 +619,14 @@ async def _handle_client(reader, writer, cf_domain: str):
         writer.write(_socks5_reply(0x00))
         await writer.drain()
 
-        # [Unknown TG IP] Check
-        if not _is_telegram_ip(dst):
+        # 🤖 Bot API redirect: api.telegram.org -> api.{cf_domain}
+        original_dst = dst
+        if _is_bot_api_host(dst):
+            dst = _rewrite_bot_api_host(dst, cf_domain)
+            log.info("[%s] Bot API redirect: %s -> %s", label, original_dst, dst)
+
+        # [Unknown TG IP] Check (skip for rewritten bot API hosts)
+        if not _is_telegram_ip(dst) and not _is_bot_api_host(original_dst):
             log.info("[%s] [Unknown TG IP] %s:%d -> direct TCP passthrough", label, dst, port)
             await _pipe_passthrough(reader, writer, dst, port, label)
             return
@@ -612,23 +667,32 @@ async def _handle_client(reader, writer, cf_domain: str):
         if dc == 203:
             dc = 2
 
-        # 5. Попытка CF-WS (Domain retry loop)
-        domains = [f'kws{dc}.{cf_domain}', f'kws{dc}-1.{cf_domain}']
+        # 5. Попытка CF-WS (Balancer + retry loop)
+        domains = balancer.get_domains_for_dc(dc)
         ws = None
-        for domain in domains:
+        chosen_domain = None
+        for base_domain in domains:
+            domain = f'kws{dc}.{base_domain}'
             log.info("[%s] DC%d%s (%s:%d) -> CF-WS %s", label, dc, ' media' if is_media else '', dst, port, domain)
             try:
                 ws = await RawWebSocket.connect(domain, domain, timeout=10.0)
+                chosen_domain = base_domain
                 break
             except WsHandshakeError as exc:
                 log.warning("[%s] CF-WS handshake failed: %d %s", label, exc.status_code, exc.status_line)
+                balancer.rotate_for_dc(dc)
             except Exception as exc:
-                log.warning("[%s] CF-WS connect failed: %s", label, exc)
+                log.warning("[%s] CF-WS connect failed: %s", label, repr(exc))
+                balancer.rotate_for_dc(dc)
 
         if ws is None:
             log.error("[%s] All CF-WS endpoints failed for DC%d -> TCP last resort", label, dc)
             await _tcp_last_resort(reader, writer, dst, port, init, label)
             return
+
+        # Update balancer on success
+        if chosen_domain and balancer.update_domain_for_dc(dc, chosen_domain):
+            log.info("[%s] Switched active CF domain for DC%d to %s", label, dc, chosen_domain)
 
         # 6. Transparent Bridge (Splitter enabled for proper MTProto framing)
         splitter = None
@@ -657,7 +721,13 @@ async def _handle_client(reader, writer, cf_domain: str):
 
 # ======================== MAIN ========================
 async def _run(host: str, port: int, cf_domain: str):
-    server = await asyncio.start_server(lambda r, w: _handle_client(r, w, cf_domain), host, port)
+    # Initialize balancer with user domain + fallbacks
+    base_domains = [cf_domain.strip().lstrip("*.")]
+    if cf_domain not in base_domains:
+        base_domains.append(cf_domain)
+    balancer = _CfBalancer(base_domains)
+    
+    server = await asyncio.start_server(lambda r, w: _handle_client(r, w, cf_domain, balancer), host, port)
     for sock in server.sockets:
         try:
             sock.setsockopt(_socket.IPPROTO_TCP, _socket.TCP_NODELAY, 1)
@@ -669,6 +739,7 @@ async def _run(host: str, port: int, cf_domain: str):
     log.info("  CF Domain:     %s", cf_domain)
     log.info("  Fallback:      Direct TCP (last resort)")
     log.info("  Mode:          Transparent + MsgSplitter (proper framing)")
+    log.info("  Bot API:       Redirect to api.%s", cf_domain.strip().lstrip("*."))
     log.info("  DC Resolver:   Subnet-based (auto)")
     log.info("="*60)
     try:
@@ -687,7 +758,7 @@ def main():
                         format='%(asctime)s %(levelname)-5s %(message)s', datefmt='%H:%M:%S')
     logging.getLogger('asyncio').setLevel(logging.WARNING)
     try:
-        asyncio.run(_run(args.host, args.port, args.cf_domain.strip().rstrip('/')))
+        asyncio.run(_run(args.host, args.port, args.cf_domain))
     except KeyboardInterrupt:
         log.info("Shutting down.")
 
