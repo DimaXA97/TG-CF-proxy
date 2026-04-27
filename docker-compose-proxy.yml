@@ -1,6 +1,6 @@
 services:
   TG-CF-proxy:
-    image: tg-cf-proxy:1.2.1
+    image: tg-cf-proxy:1.3
     container_name: tg-cf-proxy
     ports:
       - "1080:1080"
