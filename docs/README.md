@@ -24,7 +24,7 @@ Telegram Desktop → SOCKS5 Proxy (127.0.0.1:1080) → Cloudflare → Telegram D
 
 1. Git clone.
 2. cd ./TG-WS-proxy
-3. docker build -t tg-cf-proxy:1.2.1 .
+3. docker build -t tg-cf-proxy:1.3 .
 4. Внутри лежат два docker compose файла: docker-compose-wg - использовать WireGuard-client для выхода в сеть, docker-compose-proxy - выход через обычный docker-bridge.
    Отредактируйте нужный Docker compose файл, указав свой домен или используйте установленный по умолчанию ( --cf-domain virkgj.com)
    Как настроить свой домен - https://github.com/DimaXA97/TG-CF-proxy/blob/main/docs/CfProxy.md
